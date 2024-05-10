@@ -1,67 +1,77 @@
-import pandas as pd
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from selenium import webdriver
+import threading
 import random
-import requests
 from bs4 import BeautifulSoup
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+import keyboard
+import string
+import requests
+import time
 import os
-
-class PC():
-    SpriritListSections = []
-    SpiritDrinkList = []
-
-link = "https://www.spiritsandwine.lv/lv/"
-req = requests.get(link)
-x = 0
-soup = BeautifulSoup(req.content, 'html.parser')
-selection = soup.find_all('div', class_="col-sm-5 col-md-4 col-xl-3 mb-1")
-for items in selection:
-    find_a = items.find('a')
-    if find_a:
-        Link = find_a['href'][4:]
-        PC.SpriritListSections.append(link + Link)
-
-req = requests.get(PC.SpriritListSections[0])
-soup = BeautifulSoup(req.content, 'html.parser')
+import threading
+import pyautogui
+import pyperclip
+import platform
 
 
-while True:
-    drink_box = soup.find_all('div', class_="product-container")
-    for items in drink_box:
-        find_a = items.find('a')
-        if find_a:
-            Link = find_a['href']
-            PC.SpiritDrinkList.append(link +Link)
-    next_button = soup.find('a', class_="btn-next")
-    if next_button:
-        x += 1
-        print(x)
-        req = requests.get(link + next_button['href'])
-    elif not next_button:
-        break
+def SpiritAndWine():
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+    chrome_options.add_argument("--disable-gpu")
 
-for link in PC.SpiritDrinkList:
-    print(link)
+    SpritSelection = []
+    service = Service(ChromeDriverManager().install())
+    link = "https://www.spiritsandwine.lv/"
+    response = requests.get(link)
+    soup = BeautifulSoup(response.content, "html.parser")
+    a_tag = soup.find_all("a", class_="dropdown-item")
+    for a in a_tag:
+        if a["href"][:4] != "http": 
+            print(a["href"])
+   
+
+    """
+    workbook = Workbook()
+    sheet = workbook.create_sheet(title="Locations")
+    for section in SpritSelection :
+        clean_section = section.translate(str.maketrans("", "", string.punctuation))
+        sheet = workbook.create_sheet(title=clean_section)
+    workbook.save("Locations.xlsx")"""
+    print("Done")
+    time.sleep(2000)
+    
+   
+
+SpiritAndWine()
+
+
 """
-# Create a DataFrame with a link
-data = {'Yarn': ["Name"]}
-df = pd.DataFrame(data)
-random_number = random.randint(100000, 999999)
-# Create a Pandas Excel writer using XlsxWriter as the engine
-file_name = f"{random_number}.xlsx"
-writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
+# Create a new workbook
+workbook = Workbook()
 
-# Write the DataFrame to the Excel file
-df.to_excel(writer, sheet_name='Sheet1', index=False)
+sheet = workbook.active
+sheet.cell(row=1, column=1).value = "Hello, World!"
 
-# Get the xlsxwriter workbook and worksheet objects
-workbook = writer.book
-worksheet = writer.sheets['Sheet1']
+max_length = 0
+for row in sheet.iter_rows(min_row=1, min_col=1, max_col=1):
+    for cell in row:
+        if cell.value:
+            max_length = max(max_length, len(str(cell.value)))
 
-# Add a hyperlink format to the workbook
-url_format = workbook.add_format({'color': 'blue', 'underline': True})
+column = sheet.column_dimensions[f'{chr(0 + 65)}']
+column.width = max_length
 
-# Add the hyperlink to the cell
-worksheet.write_url('B1', link, url_format, string='yes')
-
-# Save the Excel file
-writer._save()
-os.system(f'start excel {file_name}')"""
+workbook.save('output.xlsx')
+os.system(f'start excel {"output.xlsx"}')"""
