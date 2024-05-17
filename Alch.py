@@ -37,22 +37,19 @@ def Scraping(Link):
         for links in Links:
             PLink = link + links["href"]
             soup1 = BeautifulSoup(requests.get(PLink).content, "html.parser")
-            
-            Sale = soup1.find("div", class_="product-price-sale")
+            InfoBoks = soup1.find("div", class_="page-product-container container-fluid")
+            Sale = InfoBoks.find("div", class_="product-price-sale")
             
             if Sale is not None:
                 sheet.cell(row=productsCount, column=3).value = "Akcija"
-                Price = soup1.find("div", class_="actual")
+                Price = InfoBoks.find("div", class_="actual")
                 if Price is not None:
                     sheet.cell(row=productsCount, column=2).value = Price.text
             else:
                 sheet.cell(row=productsCount, column=3).value = "Nav"
-                Price = soup1.find("div", class_="product-price").text
-                Price2 = soup1.find("div", class_="product-price mr-1 text-right").text
-                if Price2 is not None:
-                    sheet.cell(row=productsCount, column=2).value = Price2
-                else:
-                    sheet.cell(row=productsCount, column=2).value = Price
+                Price = InfoBoks.find("div", class_="product-price").text
+                Price = Price.strip()
+                sheet.cell(row=productsCount, column=2).value = Price
 
             sheet.cell(row=productsCount, column=4).value = PLink
             productsCount += 1 
