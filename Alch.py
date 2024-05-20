@@ -38,18 +38,22 @@ def Scraping(Link):
             PLink = link + links["href"]
             soup1 = BeautifulSoup(requests.get(PLink).content, "html.parser")
             InfoBoks = soup1.find("div", class_="page-product-container container-fluid")
-            Sale = InfoBoks.find("div", class_="product-price-sale")
-            
-            if Sale is not None:
-                sheet.cell(row=productsCount, column=3).value = "Akcija"
-                Price = InfoBoks.find("div", class_="actual")
-                if Price is not None:
-                    sheet.cell(row=productsCount, column=2).value = Price.text
-            else:
-                sheet.cell(row=productsCount, column=3).value = "Nav"
-                Price = InfoBoks.find("div", class_="product-price").text
-                Price = Price.strip()
-                sheet.cell(row=productsCount, column=2).value = Price
+            if InfoBoks is not None:
+                Sale = InfoBoks.find("div", class_="product-price-sale")
+                NameP = InfoBoks.find("h1", class_="product-title").text.strip()
+                sheet.cell(row=productsCount, column=1).value = NameP
+                if Sale is not None:
+                    sheet.cell(row=productsCount, column=3).value = "Akcija"
+                    Price = InfoBoks.find("div", class_="actual")
+                    if Price is not None:
+                        sheet.cell(row=productsCount, column=2).value = Price.text
+                else:
+                    sheet.cell(row=productsCount, column=3).value = "Nav"
+                    Price = InfoBoks.find("div", class_="product-price").text
+                    Price = Price.strip()
+                    sheet.cell(row=productsCount, column=2).value = Price
+            else :
+                sheet.cell(row=productsCount, column=1).value = "NotFound"
 
             sheet.cell(row=productsCount, column=4).value = PLink
             productsCount += 1 
