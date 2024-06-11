@@ -1,0 +1,41 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="excel.js"></script>    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>Document</title>
+    <style>
+        #demoB {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        #demoB td, #demoB th, #demoB {
+            border: 1px solid black;
+        }
+        #demoB td{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <input type="file" id="demoA" accept=".xlsx, .xls">
+    <button id="checkButton">Check Table</button>
+    <table id="demoB" ></table>
+    
+</body>
+<script>
+    document.getElementById("checkButton").addEventListener("click", checkTable);
+
+function checkTable() {
+    var table = document.getElementById("demoB");
+    var tds = table.querySelectorAll("td[colspan='4']");
+
+    for (var i = 0; i < tds.length; i++) {
+        var td = tds[i];
+        console.log(td.textContent);
+    }
+}
+</script>
+</html>
