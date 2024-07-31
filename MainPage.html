@@ -1,41 +1,260 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script defer src="excel.js"></script>    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <link href="style.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <title>Document</title>
-    <style>
-        #demoB {
-            border-collapse: collapse;
-            width: 100%;
-        }
+    <script>
+        
 
-        #demoB td, #demoB th, #demoB {
-            border: 1px solid black;
+ 
+
+        function MainFilterUpdater() {
+            //Variables
+            var PriceHide = false;
+            var SaleHide = false;
+            var  H2NoResults = document.getElementById('NoResults');
+            const  table = document.getElementsByTagName('table');
+            const  TypeSelectElement = document.getElementById('TypeDropDown');
+            const  SaleSelectElement = document.getElementById('SaleDropDown');
+            const  InputMinPrice = document.getElementsByClassName('MinPriceBox')[0];
+            const  InputMaxPrice = document.getElementsByClassName('MaxPriceBox')[0];
+            var TypeIgnore = false;
+            var SaleIgnore = false;
+
+            //Get the values
+            const TypeSelectIndex = TypeSelectElement.selectedIndex;
+            const SaleSelectIndex = SaleSelectElement.selectedIndex;
+            const TypeSelectValue = TypeSelectIndex !== -1 ? TypeSelectElement.options[TypeSelectIndex].text : '';
+            const SaleSelectValue = SaleSelectIndex !== -1 ? SaleSelectElement.options[SaleSelectIndex].text : '';
+
+
+            //Set the values if out of range
+            [InputMaxPrice.value, InputMinPrice.value].forEach((value, index) => {
+                if (value > maxPrice) {
+                    document.getElementsByClassName(`${index === 0 ? 'MaxPriceBox' : 'MinPriceBox'}`)[0].value = maxPrice;
+                }
+                if (value < 0) {
+                    document.getElementsByClassName(`${index === 0 ? 'MaxPriceBox' : 'MinPriceBox'}`)[0].value = 0;
+                }
+            });
+
+            //Get all tables
+            var AllTablesHidden = true;
+            for (var i = 0; i < table.length; i++) {
+                var TableClass = table[i].getAttribute('class');
+                var tableHidden = true;
+                //Check if table should be displayed by there title
+                table[i].style.display = 'table';
+                if (TableClass == TypeSelectValue || TypeSelectValue == "Visi") {
+                    
+                    
+                    //Get all table rows
+                    var TableTr = table[i].getElementsByTagName('tr');
+                    for (var j = 0; j < TableTr.length; j++) {
+                        var TrHidden = true;
+                        //Get all table cells
+                        var PriceHide = false;
+                        var SaleHide = false;
+                        var TableTd = TableTr[j].getElementsByTagName('td');
+                        for (var k = 0; k < TableTd.length; k++) {
+
+                            if ("CellNameC" == TableTd[k].getAttribute('class')) {
+                                if (TableTd[k].textContent != SaleSelectValue && SaleSelectValue != "Visi") {
+                                    SaleHide = true;
+                                }
+                            }
+
+                            if ("CellNameB" == TableTd[k].getAttribute('class')) {
+                                var Price = parseFloat(TableTd[k].textContent.replace(/[^0-9.,]/g, '').replace(',', '.'))
+                                if (Price <= InputMinPrice.value || Price >= InputMaxPrice.value) {
+                                    PriceHide = true;
+                                }
+                            }
+                            if (PriceHide || SaleHide) {
+                                TrHidden = true;
+                            } else {
+                                TrHidden = false;   
+                            }
+                        }
+                        if (TrHidden) {
+                            TableTr[j].style.display = 'none';
+                        } else {
+                            TableTr[j].style.display = 'table-row';
+                            tableHidden = false;
+                            AllTablesHidden = false;
+                        }
+                    }
+
+                }
+                if (tableHidden) {
+                    table[i].style.display = 'none';
+                }
+                console.log(AllTablesHidden);
+            }
+        
+            if (AllTablesHidden) {
+                H2NoResults.style.display = 'block';
+                
+            } else {
+                H2NoResults.style.display = 'none'; 
+                
+            }
         }
-        #demoB td{
-            text-align: center;
-        }
-    </style>
+    </script>
 </head>
 <body>
-    <input type="file" id="demoA" accept=".xlsx, .xls">
-    <button id="checkButton">Check Table</button>
-    <table id="demoB" ></table>
+
+    <select name="Type" id="TypeDropDown"  onclick="UpdateDropDownSelection()" onchange="MainFilterUpdater()">
+        <option value="All">Visi</option>
+      </select>
+
+      <select name="Type" id="SaleDropDown" onchange="MainFilterUpdater()">
+        <option value="Visi">Visi</option>
+        <option value="Akcija">Akcija</option>
+        <option value="Nav">Nav</option>
+      </select>
     
+      <div>
+        <label>Cena:</label>
+        <input min="0" type="number" value="0" class="MinPriceBox" onchange="MainFilterUpdater()">
+        <label for="price">-</label>
+        <input min="0" type="number" class="MaxPriceBox" onchange="MainFilterUpdater()">
+      </div>
+
+    <h2 id="NoResults" style="display: none;">No results</h2>
 </body>
 <script>
-    document.getElementById("checkButton").addEventListener("click", checkTable);
 
-function checkTable() {
-    var table = document.getElementById("demoB");
-    var tds = table.querySelectorAll("td[colspan='4']");
+// Get the input element
+// Specify the paths to the Excel files
+var excelFilePaths = [
+    "AlkhOutlet.xlsx",
+    "SpiritAndVine.xlsx",
+    // Add more paths as needed
+];
 
-    for (var i = 0; i < tds.length; i++) {
-        var td = tds[i];
-        console.log(td.textContent);
-    }
+var maxPrice = 0;
+function readExcelFilesFromPaths() {
+    var tables = {}; // Object to store tables by sheet name
+    excelFilePaths.forEach(function(filePath) {
+        fetch(filePath)
+            .then(response => response.arrayBuffer())
+            .then(data => {
+                var workbook = XLSX.read(new Uint8Array(data), { type: "array" });
+                workbook.SheetNames.forEach(function(sheetName) {
+                    if (sheetName !== "Sheet") { // Check if the sheet name is not "Sheet"
+                        var worksheet = workbook.Sheets[sheetName];
+                        var jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                        // Check if a table already exists for the sheet name
+                        var table = document.querySelector(`table.${sheetName}`);
+                        if (table) {
+                            // Add the sheet to the existing table
+                            var headerRow = document.createElement("tr");
+                            var count = 0;
+                            for (var key in jsonData[0]) {
+                                var headerCell = document.createElement("td");
+                                headerCell.textContent = key;
+                                headerCell.className = "CellName" + String.fromCharCode(65 + count); // Assign class based on position
+                                headerRow.appendChild(headerCell);
+                                count += 1;
+                                if (count == 2) {
+                                    var priceNumber = parseFloat(key.replace(/[^0-9.,]/g, '').replace(',', '.'));
+                                    if (priceNumber > maxPrice) {
+                                        maxPrice = Math.ceil(priceNumber);
+                                        document.getElementsByClassName("MaxPriceBox")[0].value = maxPrice;
+                                        document.getElementsByClassName("MaxPriceBox")[0].max = maxPrice;
+                                    }
+                                }
+                            }
+                            table.appendChild(headerRow);
+                            for (var i = 0; i < jsonData.length; i++) {
+                                var row = document.createElement("tr");
+                                for (var keyIndex = 0; keyIndex < Object.keys(jsonData[i]).length; keyIndex++) {
+                                    var cell = document.createElement("td");
+                                    cell.textContent = jsonData[i][Object.keys(jsonData[i])[keyIndex]];
+                                    cell.className = "CellName" + String.fromCharCode(65 + keyIndex); // Assign class based on position
+                                    row.appendChild(cell);
+                                    var PlaceHolder = jsonData[i][Object.keys(jsonData[i])[keyIndex]];
+                                    var priceNumber = parseFloat(PlaceHolder.replace(/[^0-9.,]/g, '').replace(',', '.'));
+                                    if (keyIndex == 1 && priceNumber > maxPrice) {
+                                        maxPrice = Math.ceil(priceNumber);
+                                        document.getElementsByClassName("MaxPriceBox")[0].value = maxPrice;
+                                    }
+                                }
+                                table.appendChild(row);
+                            }
+                        } else {
+                            // Create a new table if it doesn't exist
+                            var table = document.createElement("table");
+                            table.id = "dataTable";
+                            table.className = sheetName;
+                            tables[sheetName] = table;
+                            document.body.appendChild(table); // Append table to the document
+                            var h2 = document.createElement("h2");
+                            h2.textContent = sheetName;
+                            table.appendChild(h2);
+                            // Create the table header
+                            var headerRow = document.createElement("tr");
+                            var count = 0;
+                            for (var key in jsonData[0]) {
+                                var headerCell = document.createElement("td");
+                                headerCell.textContent = key;
+                                headerCell.className = "CellName" + String.fromCharCode(65 + count); // Assign class based on position
+                                headerRow.appendChild(headerCell);
+                                count += 1;
+                                if (count == 2) {
+                                    var priceNumber = parseFloat(key.replace(/[^0-9.,]/g, '').replace(',', '.'));
+                                    if (priceNumber > maxPrice) {
+                                        maxPrice = Math.ceil(priceNumber);
+                                        document.getElementsByClassName("MaxPriceBox")[0].value = maxPrice;
+                                        document.getElementsByClassName("MaxPriceBox")[0].max = maxPrice;
+                                    }
+                                }
+                            }
+                            table.appendChild(headerRow);
+                            for (var i = 0; i < jsonData.length; i++) {
+                                var row = document.createElement("tr");
+                                for (var keyIndex = 0; keyIndex < Object.keys(jsonData[i]).length; keyIndex++) {
+                                    var cell = document.createElement("td");
+                                    cell.textContent = jsonData[i][Object.keys(jsonData[i])[keyIndex]];
+                                    cell.className = "CellName" + String.fromCharCode(65 + keyIndex); // Assign class based on position
+                                    row.appendChild(cell);
+                                    var PlaceHolder = jsonData[i][Object.keys(jsonData[i])[keyIndex]];
+                                    var priceNumber = parseFloat(PlaceHolder.replace(/[^0-9.,]/g, '').replace(',', '.'));
+                                    if (keyIndex == 1 && priceNumber > maxPrice) {
+                                        maxPrice = Math.ceil(priceNumber);
+                                        document.getElementsByClassName("MaxPriceBox")[0].value = maxPrice;
+                                    }
+                                }
+                                table.appendChild(row);
+                            }
+                        }
+                    }
+                });
+            });
+    });
 }
+
+function UpdateDropDownSelection() {
+            var tables = document.querySelectorAll('table');
+            var select = document.getElementById("TypeDropDown");
+            if (select.options.length <= 1) {
+                for (var i = 0; i < tables.length; i++) {
+                    var tableClass = tables[i].getAttribute('class'); // Get the class attribute of the table
+                    var option = document.createElement('option');
+                    option.text = tableClass;
+                    
+                    select.add(option);
+                }
+            }
+        }
+// Call the function to read the Excel files from paths when the page loads
+window.onload = function() {
+    readExcelFilesFromPaths();
+   
+};
 </script>
 </html>

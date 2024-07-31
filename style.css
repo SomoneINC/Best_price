@@ -1,0 +1,11 @@
+#dataTable {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#dataTable td, #dataTable th, #dataTable {
+    border: 1px solid black;
+}
+#dataTable td{
+    text-align: center;
+}

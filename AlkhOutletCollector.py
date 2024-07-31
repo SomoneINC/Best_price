@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-
+import time
 import requests
 import threading
 
@@ -15,11 +15,18 @@ class A:
 def Scraping(Link):
     soup = BeautifulSoup(requests.get(Link).content, "html.parser")
     SectionTitle = soup.find("h1", class_="page-title").text
-    clean_title = SectionTitle.replace(" ", "")
-    clean_title = clean_title.replace("\n", "")
+    clean_title = SectionTitle.replace(" ", "").replace("\n", "")
     ProductCount = 1
 
-    sheet = A.workbook.create_sheet(title=clean_title)
+    # Check if a sheet with the same name already exists
+    sheet_title = clean_title
+    sheet_count = 1
+    while sheet_title in A.workbook.sheetnames:
+        sheet_title = f"{clean_title} ({sheet_count})"
+        sheet_count += 1
+
+    sheet = A.workbook.create_sheet(title=sheet_title)
+
     while True:
         ProductList = []
         AllItems = soup.find_all("li", class_="item product product-item")
@@ -32,18 +39,19 @@ def Scraping(Link):
 
             ProductTitle = soup2.find("h1", class_="page-title").text
             sheet.cell(row=ProductCount, column=1).value = ProductTitle
-            ProductOnSalePrice = soup2.find("span", class_="special-price")
+            productInfoMain = soup2.find("div", class_="product-info-main")
+            ProductOnSalePrice = productInfoMain.find("span", class_="special-price")
             if ProductOnSalePrice is not None:
                 ProductPrice = ProductOnSalePrice.find("span", class_="price").text
+                
                 sheet.cell(row=ProductCount, column=3).value = "Akcija"
             else:
                 ProductPrice = soup2.find("span", class_="price").text
                 sheet.cell(row=ProductCount, column=3).value = "Nav"
             sheet.cell(row=ProductCount, column=2).value = ProductPrice
             sheet.cell(row=ProductCount, column=4).value = product
-
+            print(f"Scraped product {ProductCount}: {ProductTitle}")
             ProductCount += 1
-            print(clean_title + " " + str(ProductCount))
 
         PageSelector = soup.find("div", class_="pages")
         if PageSelector is not None:
@@ -54,6 +62,9 @@ def Scraping(Link):
                 break
         else:
             break
+
+    # Add a delay to avoid exceeding the API rate limit
+    time.sleep(1)
 
 
 
